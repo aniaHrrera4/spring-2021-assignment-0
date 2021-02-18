@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <script src="assignment0.js" type="module"></script>
 </head>
 <link rel="shortcut icon" href="#">
 <style>
@@ -17,7 +16,7 @@
         width: 100%;
         height: 100%;
         overflow: auto;
-        background-color: white;
+        background-color: rgb(252, 225, 225);
     }
     #config {
         position: absolute;
@@ -32,7 +31,7 @@
     }
 </style>
 <body>
-    <script src="assignment0.js" type="module"></script>
+ <script src="assignment0.js" type="module"></script>
     <canvas id="glcanvas"></canvas>
     <div id="config">
         <table>
@@ -56,9 +55,10 @@
                 <td>Triangles</td>
                 <td><input id="triangles" type="range" min="1" max=nTriangles value="1" oninput="window.updateTriangles()"></td>
             </tr>
-            <tr><!-- toggle between color chosen by sliders or color specified by the json file -->
+            <!-- toggle between color chosen by sliders or color specified by the json file -->
+            <tr>
                 
-                <input type="checkbox" id="tcolor" name="tcolor" onchange='window.checkBox(event)'>
+                <input type="checkbox" id="myCheck" name="tcolor" onchange='window.checkBox(event)'>
                 <label for="tcolor">toggle colors</label>
                 
             </tr>
@@ -66,11 +66,8 @@
         </table>    
         <div>
             <label for="file">Upload JSON</label>
-            <input type="file" id="file" name="file" accept="application/JSON" >
+            <input type="file" value="Upload File" id="file" name="file" accept="application/JSON" onchange='window.openFile()'><br>
         </div>
-        <div>
-            <button onclick='window.openFile(event)'>Submit</button>
-          </div>    
           
     </div>
 

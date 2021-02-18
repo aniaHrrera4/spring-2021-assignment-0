@@ -5,19 +5,46 @@ var gl;
 var program;
 var vao;
 var uniformLoc;
-var currColor;
+var currColor=[];
 var newColor;
-var positions = []
-var colors = []
-var poscolors = []
+var positions = [];
+var colors = [];
+var posAttribLoc;
+var colorAttribLoc;
+var colorBuffer;
+var posBuffer;
 var nTriangles;
 var currTri;
 var start;
+var animRunning = false;
 
 
 
-window.currCheck = function(event) {
-    return document.querySelector("#trtcolor").value;
+window.checkBox = function() {
+    if(document.getElementById("myCheck").checked){
+        //call function to updatecolors to use slider 
+        colors.clear;
+        updateCurrentColor();
+
+        for(var i = 0; i<nTriangles;i++){
+            colors = colors.concat(currColor);
+        }
+
+        console.log(colors)
+        colorBuffer = createBuffer(colors);
+        window.requestAnimationFrame(draw);
+       // preinitialize();
+
+    }else if(document.getElementById("myCheck").checked){
+        //call funtion to use the colors provided in the json file
+        document.querySelector("#sliderR").disable = true;
+        document.querySelector("#sliderG").disable = true;
+        document.querySelector("#sliderB").disable = true;
+        document.querySelector("#sliderA").disable = true;
+
+        openFile(); 
+
+    }
 }
 window.updateTriangles = function() {
     currTri = parseInt(document.querySelector("#triangles").value);
@@ -29,6 +56,13 @@ window.updateColor = function() {
     var b = parseInt(document.querySelector("#sliderB").value)/255.0;
     var a = parseInt(document.querySelector("#sliderA").value)/255.0;
     currColor = [r,g,b,a];
+}
+window.startAnimation = function() {
+    animRunning = true;
+}
+
+window.stopAnimation = function() {
+    animRunning = false;
 }
 
 
@@ -96,7 +130,7 @@ function createBuffer(vertices) {
     return buffer;
 }
 
-function createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer, posColorBuffer) {
+function createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer) {
     
     var vao = gl.createVertexArray();
 
@@ -115,117 +149,74 @@ function createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer, posColo
     gl.vertexAttribPointer(colorAttribLoc, size, type, false, 0, 0);
 
 
-    // Single buffer approach
-    // gl.bindVertexArray(vao);
-    // gl.bindBuffer(gl.ARRAY_BUFFER, posColorBuffer);
-    // gl.enableVertexAttribArray(posAttribLoc);
-    // var size = 2; // number of components per attribute
-    // var type = gl.FLOAT;
-    // var normalization = false;
-    // var stride = 6 * 4; // offset in bytes to next attribute
-    // var offset = 0;
-    // gl.vertexAttribPointer(posAttribLoc, size, type, false, stride, offset);
-
-    // gl.enableVertexAttribArray(colorAttribLoc);
-    // size = 4;
-    // type = gl.FLOAT;
-    // normalization = false;
-    // stride = 6 * 4; 
-    // offset = 2 * 4;
-    // gl.vertexAttribPointer(colorAttribLoc, size, type, normalization, stride, offset);
-
-
     return vao;
 }
 
-// function draw(timestamp) {
+function draw(timestamp) {
 
-//     gl.clearColor(1, 1, 1, 1);
-//     gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clearColor(1, 1, 1, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
-//     if(start == undefined) {
-//         start = timestamp;
-//     }
-//     var elapsed = timestamp - start;
-//     if(elapsed >= 1000) {
-//         newColor = randomColor();
-//         start = timestamp;
-//     }
+    if(start == undefined) {
+        start = timestamp;
+    }
+    var elapsed = timestamp - start;
+    if(elapsed >= 1000) {
+        newColor = randomColor();
+        start = timestamp;
+    }
 
-//     if(animRunning) {
-//         updateCurrentColor();
-//     }
+    if(animRunning) {
+        updateCurrentColor();
+    }
 
-//     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-//     gl.useProgram(program);
-//     gl.uniform4fv(uniformLoc, new Float32Array(currColor));
-//     gl.bindVertexArray(vao);
-//     var primitiveType = gl.TRIANGLES;
-//     var count = 3*currTri; // number of elements (vertices)
-//     gl.drawArrays(primitiveType, 0, count);
+    gl.useProgram(program);
+    gl.uniform4fv(uniformLoc, new Float32Array(currColor));
+    gl.bindVertexArray(vao);
+    var primitiveType = gl.TRIANGLES;
+    var count = 3*currTri; // number of elements (vertices)
+    gl.drawArrays(primitiveType, 0, count);
 
-//     requestAnimationFrame(draw);
-// }
-// function loadJSON() {
-//     var importedFile = document.getElementById('file').files[0];
+   
+     requestAnimationFrame(draw);
+}
 
-//     var reader = new FileReader();
-//     const json = '{"positions": [x_n,y_n,z_n],"colors": [r_n,g_n,b_n,a_n]}';
-    
-//     reader.onload = function() {
-//         const obj = JSON.parse(json);
-//     };
+function preinitialize(){
+    //create buffers after fillinf up the array 
+    posAttribLoc = gl.getAttribLocation(program, "position");
+    colorAttribLoc = gl.getAttribLocation(program, "color");
+    uniformLoc = gl.getUniformLocation(program, 'uColor');
 
-    
-
-// }
-
-window.openFile = function(event) {
-    var input = event.target;
-
-    var reader = new FileReader();
-    //const json = '{"positions": [x_n,y_n,z_n],"colors": [r_n,g_n,b_n,a_n]}';
-    
-    reader.onload = function() {
-        const obj = JSON.parse(input.result);
-        positions = obj.positions;
-        colors = obj.colors;
-    };
-
-    reader.onloadend = function() {
-        console.log(reader.error.message);
-    };
-    //reader.readAsArrayBuffer(input.files[0]);
-
-    nTriangles = positions.length;
+    posBuffer = createBuffer(positions);
+    colorBuffer = createBuffer(colors);
+    vao = createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer);
+    nTriangles = (positions.length)/9;
     console.log(nTriangles);
-    reader.readAsText(input);
-  };
-
-function createTriangles() {
-    
-    function rand() {
-        return (2 * Math.random() - 1.0);
-    }
-
-    for(var i = 0; i < nTriangles; ++i) {
-        var x = rand();
-        var y = rand();
-        var size = Math.random() * 0.25;
-
-        var poscolor = [
-            x, y+size, 0, 1,0,0,0.5,
-            x-size, y-size, 0, 1,0,0,1,
-            x+size, y-size, 0, 1,0,0,1
-        ];
-
-        poscolors = poscolors.concat(poscolor);
-    }
-
-    return {'positions': positions, 'colors': colors, 'poscolors': poscolors};
+    document.querySelector("#triangles").max= nTriangles;
+    console.log(document.querySelector("#triangles").max);
 
 }
+
+window.openFile = function() {
+    var file = document.querySelector('input[type="file"]');
+    var reader = new FileReader();
+    reader.onload = function() {
+         //const json = '{"positions": [x_n,y_n,z_n],"colors": [r_n,g_n,b_n,a_n]}';
+        const obj = JSON.parse(reader.result);
+        positions = obj.positions;
+        console.log(obj.positions);
+        colors = obj.colors;
+        //create buffer arrays after storing data from buffers
+        preinitialize();
+    };
+    // reader.onloadend = function() {
+    //     console.log(reader.error.message);
+    // };
+    reader.readAsText(file.files[0]);
+  };
+
 
 function initialize() {
     var canvas = document.querySelector("#glcanvas");
@@ -238,8 +229,6 @@ function initialize() {
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
     currTri = 1;
-    var triangles = createTriangles();
-    console.log(triangles);
     currColor = [0, 0, 0, 1];
     newColor = currColor;
     
@@ -247,16 +236,8 @@ function initialize() {
     var fragmentShader = createShader(gl.FRAGMENT_SHADER, fragmentShaderSrc);
     program = createProgram(vertexShader, fragmentShader);
 
-    var posAttribLoc = gl.getAttribLocation(program, "position");
-    var colorAttribLoc = gl.getAttribLocation(program, "color");
-    uniformLoc = gl.getUniformLocation(program, 'uColor');
 
-    var posBuffer = createBuffer(triangles['positions']);
-    var colorBuffer = createBuffer(triangles['colors']);
-    var posColorBuffer = createBuffer(triangles['poscolors']);
-    vao = createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer, posColorBuffer);
-
-    //window.requestAnimationFrame(draw);
+    window.requestAnimationFrame(draw);
 }
 
 window.onload = initialize;
