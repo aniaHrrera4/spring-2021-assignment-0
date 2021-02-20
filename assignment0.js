@@ -17,32 +17,24 @@ var nTriangles;
 var currTri;
 var start;
 var animRunning = false;
+var box = false;
 
 
 
 window.checkBox = function() {
     if(document.getElementById("myCheck").checked){
-        //call function to updatecolors to use slider 
-        colors.clear;
-        updateCurrentColor();
+        box=true;
 
-        for(var i = 0; i<nTriangles;i++){
-            colors = colors.concat(currColor);
-        }
-
-        console.log(colors)
-        colorBuffer = createBuffer(colors);
-        window.requestAnimationFrame(draw);
-       // preinitialize();
-
-    }else if(document.getElementById("myCheck").checked){
+    }else if(document.getElementById("myCheck").unchecked){
+        box=false;
         //call funtion to use the colors provided in the json file
         document.querySelector("#sliderR").disable = true;
         document.querySelector("#sliderG").disable = true;
         document.querySelector("#sliderB").disable = true;
         document.querySelector("#sliderA").disable = true;
-
-        openFile(); 
+       
+       
+       // preinitialize();
 
     }
 }
@@ -173,7 +165,10 @@ function draw(timestamp) {
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
     gl.useProgram(program);
+
     gl.uniform4fv(uniformLoc, new Float32Array(currColor));
+    //gl.uniform1i(uniformLoc, box);
+
     gl.bindVertexArray(vao);
     var primitiveType = gl.TRIANGLES;
     var count = 3*currTri; // number of elements (vertices)
@@ -191,11 +186,12 @@ function preinitialize(){
 
     posBuffer = createBuffer(positions);
     colorBuffer = createBuffer(colors);
+
     vao = createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer);
     nTriangles = (positions.length)/9;
-    console.log(nTriangles);
+    //console.log(nTriangles);
     document.querySelector("#triangles").max= nTriangles;
-    console.log(document.querySelector("#triangles").max);
+    //console.log(document.querySelector("#triangles").max);
 
 }
 
@@ -206,7 +202,7 @@ window.openFile = function() {
          //const json = '{"positions": [x_n,y_n,z_n],"colors": [r_n,g_n,b_n,a_n]}';
         const obj = JSON.parse(reader.result);
         positions = obj.positions;
-        console.log(obj.positions);
+       // console.log(obj.positions);
         colors = obj.colors;
         //create buffer arrays after storing data from buffers
         preinitialize();
