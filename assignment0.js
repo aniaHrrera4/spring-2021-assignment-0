@@ -5,6 +5,7 @@ var gl;
 var program;
 var vao;
 var uniformLoc;
+var uniformLoc2;
 var currColor=[];
 var newColor;
 var positions = [];
@@ -17,25 +18,18 @@ var nTriangles;
 var currTri;
 var start;
 var animRunning = false;
-var box = false;
+var box;
 
 
 
 window.checkBox = function() {
     if(document.getElementById("myCheck").checked){
-        box=true;
+        box=1;
+        console.log("checked!!")
 
-    }else if(document.getElementById("myCheck").unchecked){
-        box=false;
-        //call funtion to use the colors provided in the json file
-        document.querySelector("#sliderR").disable = true;
-        document.querySelector("#sliderG").disable = true;
-        document.querySelector("#sliderB").disable = true;
-        document.querySelector("#sliderA").disable = true;
-       
-       
-       // preinitialize();
-
+    }else{
+        box=0;
+        console.log("unchecked!!")
     }
 }
 window.updateTriangles = function() {
@@ -146,7 +140,7 @@ function createVAO(posAttribLoc, colorAttribLoc, posBuffer, colorBuffer) {
 
 function draw(timestamp) {
 
-    gl.clearColor(1, 1, 1, 1);
+    gl.clearColor(238, 209, 151,0);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     if(start == undefined) {
@@ -163,11 +157,18 @@ function draw(timestamp) {
     }
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-
     gl.useProgram(program);
 
-    gl.uniform4fv(uniformLoc, new Float32Array(currColor));
-    //gl.uniform1i(uniformLoc, box);
+    
+    if(box){
+        //send in box==1
+        gl.uniform1i(uniformLoc2, box);
+    }else if(!box){
+        //send in box==0
+        gl.uniform1i(uniformLoc2, box);
+        gl.uniform4fv(uniformLoc, new Float32Array(currColor));
+    }
+    
 
     gl.bindVertexArray(vao);
     var primitiveType = gl.TRIANGLES;
@@ -179,10 +180,11 @@ function draw(timestamp) {
 }
 
 function preinitialize(){
-    //create buffers after fillinf up the array 
+    //create buffers and locations after filling  up the array 
     posAttribLoc = gl.getAttribLocation(program, "position");
     colorAttribLoc = gl.getAttribLocation(program, "color");
     uniformLoc = gl.getUniformLocation(program, 'uColor');
+    uniformLoc2 = gl.getUniformLocation(program, 'box');
 
     posBuffer = createBuffer(positions);
     colorBuffer = createBuffer(colors);
@@ -199,6 +201,7 @@ window.openFile = function() {
     var file = document.querySelector('input[type="file"]');
     var reader = new FileReader();
     reader.onload = function() {
+        try {
          //const json = '{"positions": [x_n,y_n,z_n],"colors": [r_n,g_n,b_n,a_n]}';
         const obj = JSON.parse(reader.result);
         positions = obj.positions;
@@ -206,10 +209,13 @@ window.openFile = function() {
         colors = obj.colors;
         //create buffer arrays after storing data from buffers
         preinitialize();
+        }catch (err) {
+            if (err.code !== 'ENOENT'){
+                window.alert("ERROR, file not following the specified format\n {'positions': [x_n,y_n,z_n],'colors': [r_n,g_n,b_n,a_n]}");
+                throw err;
+            }
+        }
     };
-    // reader.onloadend = function() {
-    //     console.log(reader.error.message);
-    // };
     reader.readAsText(file.files[0]);
   };
 
